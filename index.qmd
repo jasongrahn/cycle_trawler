@@ -145,7 +145,7 @@ if (is.null(df) || n_distinct(df$date) < 2) {
 
 ## 🏆 Fuel Value Leaderboard
 
-*Lower $/100g carbs = more fuel for your dollar.*
+*Lower $/100g carbs = more fuel for your dollar. Electrolyte products (Liquid IV, Zipfizz, coconut water) rank near the bottom — they're not primarily carb sources. Nutrition numbers are from package labels and are approximate; verify before race-day shopping.*
 
 ```{r fuel-value}
 df <- read_site("fuel_value.csv")
