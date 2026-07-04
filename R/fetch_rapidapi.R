@@ -72,7 +72,7 @@ parse_rapidapi_response <- function(raw_list, term) {
       on_sale   = (!is.na(price) & !is.na(price_was) & price < price_was) |
                     str_detect(coalesce(item_product_marketing_statement, ""),
                                regex("\\boff\\b|save|savings|instant", ignore_case = TRUE)),
-      url       = paste0("https://www.costco.com/productid.", item_number, ".html"),
+      url       = paste0("https://www.costco.com/s?keyword=", utils::URLencode(item_product_name, reserved=TRUE)),
       upc_raw   = as.character(item_number),
       in_stock  = as.logical(isItemInStock),
       keyword   = term,

@@ -15,7 +15,7 @@ execute:
 ```{r setup}
 library(dplyr)
 library(readr)
-library(gt)
+library(DT)
 library(ggplot2)
 
 read_site <- function(name) {
@@ -29,13 +29,23 @@ empty_msg <- function() {
   cat("> Nothing yet — check back Monday.\n\n")
 }
 
-link_title <- function(title, url) {
-  ifelse(!is.na(url) & nchar(url) > 0,
-         paste0('<a href="', url, '" target="_blank">', title, '</a>'),
-         title)
-}
-
 fmt_price <- function(x) ifelse(is.na(x), "—", paste0("$", formatC(x, format="f", digits=2)))
+
+make_dt <- function(df, filter = "top", ...) {
+  datatable(
+    df,
+    filter    = filter,
+    escape    = FALSE,
+    rownames  = FALSE,
+    class     = "stripe hover compact",
+    options   = list(
+      pageLength  = 25,
+      dom         = "ftp",
+      autoWidth   = TRUE
+    ),
+    ...
+  )
+}
 ```
 
 ## 🔥 On Sale Now
@@ -48,21 +58,19 @@ if (is.null(df)) {
 } else {
   df |>
     mutate(
-      title   = link_title(title, url),
-      price   = fmt_price(price),
-      price_was = fmt_price(price_was),
-      pct_off = ifelse(is.na(pct_off), "—", paste0(pct_off, "%"))
+      Item     = ifelse(!is.na(url), paste0('<a href="', url, '" target="_blank">', title, '</a>'), title),
+      Price    = price,
+      Was      = fmt_price(price_was),
+      `% Off`  = ifelse(is.na(pct_off), NA_real_, pct_off),
+      Category = category,
+      Source   = source
     ) |>
-    select(Item = title, Price = price, `Was` = price_was,
-           `% Off` = pct_off, Category = category, Source = source) |>
-    gt() |>
-    fmt_markdown(columns = Item) |>
-    tab_style(
-      style = cell_text(color = "#2e7d32", weight = "bold"),
-      locations = cells_body(columns = `% Off`)
-    ) |>
-    tab_options(table.width = pct(100), table.font.size = "14px") |>
-    cols_align(align = "left", columns = everything())
+    select(Item, Price, Was, `% Off`, Category, Source) |>
+    make_dt() |>
+    formatCurrency("Price", digits = 2) |>
+    formatStyle("% Off",
+      color = styleInterval(0, c("black", "#2e7d32")),
+      fontWeight = "bold")
 }
 ```
 
@@ -78,17 +86,16 @@ if (is.null(df)) {
 } else {
   df |>
     mutate(
-      title  = link_title(title, url),
-      price  = fmt_price(price),
-      signal = ifelse(is.na(signal), "—", formatC(as.integer(signal), format="d", big.mark=",")),
-      date   = format(date, "%b %d")
+      Item     = ifelse(!is.na(url), paste0('<a href="', url, '" target="_blank">', title, '</a>'), title),
+      Price    = price,
+      Upvotes  = signal,
+      Category = category,
+      Source   = source,
+      Date     = format(as.Date(date), "%b %d")
     ) |>
-    select(Item = title, Price = price, `👍 Upvotes` = signal,
-           Category = category, Source = source, Date = date) |>
-    gt() |>
-    fmt_markdown(columns = Item) |>
-    tab_options(table.width = pct(100), table.font.size = "14px") |>
-    cols_align(align = "left", columns = everything())
+    select(Item, Price, Upvotes, Category, Source, Date) |>
+    make_dt()  |>
+    formatCurrency("Price", digits = 2)
 }
 ```
 
@@ -102,14 +109,13 @@ if (is.null(df)) {
 } else {
   df |>
     mutate(
-      title = link_title(title, url),
-      price = fmt_price(price)
+      Item     = ifelse(!is.na(url), paste0('<a href="', url, '" target="_blank">', title, '</a>'), title),
+      Price    = price,
+      Category = category
     ) |>
-    select(Item = title, Price = price, Category = category) |>
-    gt() |>
-    fmt_markdown(columns = Item) |>
-    tab_options(table.width = pct(100), table.font.size = "14px") |>
-    cols_align(align = "left", columns = everything())
+    select(Item, Price, Category) |>
+    make_dt() |>
+    formatCurrency("Price", digits = 2)
 }
 ```
 
@@ -149,18 +155,15 @@ if (is.null(df)) {
 } else {
   df |>
     mutate(
-      title             = link_title(title, url),
-      price             = fmt_price(price),
-      usd_per_100g_carbs   = ifelse(is.na(usd_per_100g_carbs),   "—", paste0("$", usd_per_100g_carbs)),
-      usd_per_100g_protein = ifelse(is.na(usd_per_100g_protein), "—", paste0("$", usd_per_100g_protein))
+      Item              = ifelse(!is.na(url), paste0('<a href="', url, '" target="_blank">', title, '</a>'), title),
+      Price             = price,
+      `$/100g Carbs`    = usd_per_100g_carbs,
+      `$/100g Protein`  = usd_per_100g_protein,
+      Category          = category
     ) |>
-    select(Item = title, Price = price, `$/100g Carbs` = usd_per_100g_carbs,
-           `$/100g Protein` = usd_per_100g_protein, Category = category) |>
-    gt() |>
-    fmt_markdown(columns = Item) |>
-    tab_footnote("Nutrition data is manually entered and may be approximate.") |>
-    tab_options(table.width = pct(100), table.font.size = "14px") |>
-    cols_align(align = "left", columns = everything())
+    select(Item, Price, `$/100g Carbs`, `$/100g Protein`, Category) |>
+    make_dt() |>
+    formatCurrency(c("Price", "$/100g Carbs", "$/100g Protein"), digits = 2)
 }
 ```
 

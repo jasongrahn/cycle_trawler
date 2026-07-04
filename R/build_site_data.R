@@ -3,6 +3,7 @@ suppressPackageStartupMessages({
   library(readr)
   library(tidyr)
   library(lubridate)
+  library(stringr)
 })
 
 HISTORY_PATH   <- "data/history.csv"
@@ -10,6 +11,16 @@ SITE_DIR       <- "data/site"
 NUTRITION_PATH <- "nutrition.csv"
 
 # ---------- helpers ----------
+
+# Keep a row only if at least one word from its keyword appears in its title.
+# Catches "dates" → cologne, "energy bar" → dishwasher, etc.
+filter_relevant <- function(df) {
+  kw_words <- str_split(df$keyword, "\\s+")
+  title_lower <- str_to_lower(df$title)
+  keep <- mapply(function(words, t) any(str_detect(t, fixed(words))),
+                 kw_words, title_lower)
+  df[keep, ]
+}
 
 read_history <- function() {
   if (!file.exists(HISTORY_PATH)) {
@@ -61,6 +72,7 @@ build_on_sale_now <- function(df) {
 
   out <- df |>
     filter(date == latest, on_sale == TRUE, !is.na(price)) |>
+    filter_relevant() |>
     group_by(product_key) |>
     slice_max(order_by = coalesce(signal, -Inf), n = 1, with_ties = FALSE) |>
     ungroup() |>
@@ -82,6 +94,7 @@ build_community_buzz <- function(df) {
 
   df |>
     filter(source != "rapidapi", date >= cutoff) |>
+    filter_relevant() |>
     group_by(product_key) |>
     slice_max(order_by = coalesce(signal, 0), n = 1, with_ties = FALSE) |>
     ungroup() |>
