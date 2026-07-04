@@ -184,10 +184,11 @@ run_rapidapi <- function() {
   }
 
   combined <- join_category(combined)
-  append_history(combined)
+  written  <- append_history(combined)
   increment_quota(quota, length(core_terms))
 
-  message("[rapidapi] Done. ", nrow(combined), " rows appended to history.")
+  message("[rapidapi] Done. ", nrow(combined), " rows fetched → ",
+          nrow(written), " unique rows in history.")
   invisible(combined)
 }
 
