@@ -1,0 +1,16 @@
+project:
+  type: website
+  output-dir: _site
+  render:
+    - index.qmd
+
+website:
+  title: "Warehouse Watts"
+  description: "Costco deals tracker for cyclists — fuel, hydration, recovery, gear."
+  site-url: https://jasongrahn.github.io/cycle_trawler/
+
+format:
+  html:
+    theme: flatly
+    toc: false
+    page-layout: full

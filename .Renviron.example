@@ -1,0 +1,12 @@
+# Copy this file to .Renviron (which is gitignored) and fill in real values.
+# Restart your R session after editing so Sys.getenv() picks up the changes.
+# NEVER commit the real .Renviron.
+
+# RapidAPI "Real-Time Costco Data" key (the long X-RapidAPI-Key string, NOT the App ID).
+# Get it from rapidapi.com after subscribing the app to the BASIC (free) plan. See PLAN.md §4.
+RAPIDAPI_KEY=paste-your-key-here
+
+# Optional Reddit OAuth fallback (only needed if unauthenticated Reddit starts 403/429ing in CI).
+# Create a free "script" app at reddit.com/prefs/apps. See PLAN.md Phase 2.
+# REDDIT_CLIENT_ID=
+# REDDIT_CLIENT_SECRET=

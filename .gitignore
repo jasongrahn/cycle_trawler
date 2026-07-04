@@ -47,3 +47,13 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# Quarto
+/.quarto/
+/_site/
+
+# macOS
+.DS_Store
+
+# Local tooling state
+.serena/

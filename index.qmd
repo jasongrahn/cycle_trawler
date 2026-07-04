@@ -1,0 +1,10 @@
+---
+title: "Warehouse Watts"
+subtitle: "Costco deals for cyclists — fuel, hydration, recovery, gear."
+---
+
+No data yet — check back Monday.
+
+::: {.text-muted}
+Not affiliated with Costco. Hobby project. Data may be wrong.
+:::
