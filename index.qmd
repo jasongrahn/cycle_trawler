@@ -48,6 +48,10 @@ make_dt <- function(df, filter = "top", ...) {
 }
 ```
 
+::: {.text-muted style="font-size:0.85em;"}
+Not affiliated with Costco. Hobby project. Data may be wrong. If a link doesn't work, search for the product directly at [costco.com](https://www.costco.com).
+:::
+
 ## 🔥 On Sale Now
 
 ```{r on-sale}
