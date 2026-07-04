@@ -171,4 +171,5 @@ if (is.null(df)) {
 
 ::: {.text-muted style="font-size:0.85em; text-align:center;"}
 Not affiliated with Costco. Hobby project. Data may be wrong. Last updated `r format(Sys.Date(), "%B %d, %Y")`.
+If a link doesn't work, search for the product directly at [costco.com](https://www.costco.com).
 :::
