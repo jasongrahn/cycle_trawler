@@ -1,10 +1,171 @@
 ---
 title: "Warehouse Watts"
 subtitle: "Costco deals for cyclists — fuel, hydration, recovery, gear."
+format:
+  html:
+    theme: flatly
+    toc: false
+    page-layout: full
+execute:
+  echo: false
+  warning: false
+  message: false
 ---
 
-No data yet — check back Monday.
+```{r setup}
+library(dplyr)
+library(readr)
+library(gt)
+library(ggplot2)
 
-::: {.text-muted}
-Not affiliated with Costco. Hobby project. Data may be wrong.
+read_site <- function(name) {
+  path <- file.path("data/site", name)
+  if (!file.exists(path)) return(NULL)
+  df <- read_csv(path, show_col_types = FALSE)
+  if (nrow(df) == 0) NULL else df
+}
+
+empty_msg <- function() {
+  cat("> Nothing yet — check back Monday.\n\n")
+}
+
+link_title <- function(title, url) {
+  ifelse(!is.na(url) & nchar(url) > 0,
+         paste0('<a href="', url, '" target="_blank">', title, '</a>'),
+         title)
+}
+
+fmt_price <- function(x) ifelse(is.na(x), "—", paste0("$", formatC(x, format="f", digits=2)))
+```
+
+## 🔥 On Sale Now
+
+```{r on-sale}
+df <- read_site("on_sale_now.csv")
+
+if (is.null(df)) {
+  empty_msg()
+} else {
+  df |>
+    mutate(
+      title   = link_title(title, url),
+      price   = fmt_price(price),
+      price_was = fmt_price(price_was),
+      pct_off = ifelse(is.na(pct_off), "—", paste0(pct_off, "%"))
+    ) |>
+    select(Item = title, Price = price, `Was` = price_was,
+           `% Off` = pct_off, Category = category, Source = source) |>
+    gt() |>
+    fmt_markdown(columns = Item) |>
+    tab_style(
+      style = cell_text(color = "#2e7d32", weight = "bold"),
+      locations = cells_body(columns = `% Off`)
+    ) |>
+    tab_options(table.width = pct(100), table.font.size = "14px") |>
+    cols_align(align = "left", columns = everything())
+}
+```
+
+## 🗣️ Community Buzz
+
+*Prices are community-reported — verify in store before driving out.*
+
+```{r buzz}
+df <- read_site("community_buzz.csv")
+
+if (is.null(df)) {
+  empty_msg()
+} else {
+  df |>
+    mutate(
+      title  = link_title(title, url),
+      price  = fmt_price(price),
+      signal = ifelse(is.na(signal), "—", formatC(as.integer(signal), format="d", big.mark=",")),
+      date   = format(date, "%b %d")
+    ) |>
+    select(Item = title, Price = price, `👍 Upvotes` = signal,
+           Category = category, Source = source, Date = date) |>
+    gt() |>
+    fmt_markdown(columns = Item) |>
+    tab_options(table.width = pct(100), table.font.size = "14px") |>
+    cols_align(align = "left", columns = everything())
+}
+```
+
+## 🆕 New at Costco
+
+```{r new-items}
+df <- read_site("new_items.csv")
+
+if (is.null(df)) {
+  empty_msg()
+} else {
+  df |>
+    mutate(
+      title = link_title(title, url),
+      price = fmt_price(price)
+    ) |>
+    select(Item = title, Price = price, Category = category) |>
+    gt() |>
+    fmt_markdown(columns = Item) |>
+    tab_options(table.width = pct(100), table.font.size = "14px") |>
+    cols_align(align = "left", columns = everything())
+}
+```
+
+## 📈 Price Trends
+
+```{r trends}
+df <- read_site("price_trends.csv")
+
+if (is.null(df) || n_distinct(df$date) < 2) {
+  empty_msg()
+} else {
+  ggplot(df, aes(x = as.Date(date), y = price, color = title, group = title)) +
+    geom_line(linewidth = 0.8) +
+    geom_point(size = 1.5) +
+    facet_wrap(~category, scales = "free_y") +
+    scale_x_date(date_labels = "%b %d") +
+    scale_y_continuous(labels = scales::dollar) +
+    labs(x = NULL, y = NULL, color = NULL) +
+    theme_minimal(base_size = 12) +
+    theme(
+      legend.position = "bottom",
+      strip.text      = element_text(face = "bold"),
+      panel.grid.minor = element_blank()
+    )
+}
+```
+
+## 🏆 Fuel Value Leaderboard
+
+*Lower $/100g carbs = more fuel for your dollar.*
+
+```{r fuel-value}
+df <- read_site("fuel_value.csv")
+
+if (is.null(df)) {
+  empty_msg()
+} else {
+  df |>
+    mutate(
+      title             = link_title(title, url),
+      price             = fmt_price(price),
+      usd_per_100g_carbs   = ifelse(is.na(usd_per_100g_carbs),   "—", paste0("$", usd_per_100g_carbs)),
+      usd_per_100g_protein = ifelse(is.na(usd_per_100g_protein), "—", paste0("$", usd_per_100g_protein))
+    ) |>
+    select(Item = title, Price = price, `$/100g Carbs` = usd_per_100g_carbs,
+           `$/100g Protein` = usd_per_100g_protein, Category = category) |>
+    gt() |>
+    fmt_markdown(columns = Item) |>
+    tab_footnote("Nutrition data is manually entered and may be approximate.") |>
+    tab_options(table.width = pct(100), table.font.size = "14px") |>
+    cols_align(align = "left", columns = everything())
+}
+```
+
+---
+
+::: {.text-muted style="font-size:0.85em; text-align:center;"}
+Not affiliated with Costco. Hobby project. Data may be wrong. Last updated `r format(Sys.Date(), "%B %d, %Y")`.
 :::
