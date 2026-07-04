@@ -42,58 +42,44 @@ increment_quota <- function(quota, n) {
 }
 
 # ---------- parser ----------
-# Field names below are best-guess from typical RapidAPI Costco responses.
-# On the first real run, inspect data/raw/<date>_rapidapi_<term>.json and
-# update the mapping if the actual keys differ. The function warns loudly on mismatch.
+# Field mapping confirmed against live API response 2026-07-04.
+# Response shape: raw_list$data$products (data.frame, ~20 rows, 86 cols)
 
 parse_rapidapi_response <- function(raw_list, term) {
-  # Common wrapper patterns: list may be top-level array or nested under a key
-  items <- if (is.data.frame(raw_list)) {
+  items <- if (!is.null(raw_list$data) && is.list(raw_list$data) &&
+               is.data.frame(raw_list$data$products)) {
+    raw_list$data$products
+  } else if (is.data.frame(raw_list)) {
     raw_list
-  } else if (!is.null(raw_list$items)) {
-    raw_list$items
-  } else if (!is.null(raw_list$products)) {
-    raw_list$products
-  } else if (!is.null(raw_list$data)) {
-    raw_list$data
-  } else if (is.list(raw_list) && length(raw_list) > 0 && is.list(raw_list[[1]])) {
-    bind_rows(raw_list)
+  } else if (is.null(raw_list$data) || !is.data.frame(raw_list$data$products)) {
+    # zero-result response (empty list or missing data key) — not an error
+    return(NULL)
   } else {
     warning("[rapidapi] Unrecognised response shape for term '", term,
-            "' — inspect the raw JSON and update parse_rapidapi_response()")
+            "' — inspect data/raw/ and update parse_rapidapi_response()")
     return(NULL)
   }
 
   if (nrow(items) == 0L) return(NULL)
 
-  # Warn about any field mapping that falls back to NA
-  expected <- c("title", "price", "originalPrice", "onSale", "productUrl", "itemId", "inStock")
-  missing  <- setdiff(expected, names(items))
-  if (length(missing) > 0) {
-    warning("[rapidapi] Expected fields not found in response: ",
-            paste(missing, collapse = ", "),
-            " — inspect raw JSON and update field mapping")
-  }
-
   items |>
     transmute(
-      date        = Sys.Date(),
-      source      = "rapidapi",
-      title       = as.character(if ("title"         %in% names(items)) title         else NA),
-      price       = as.double(  if ("price"          %in% names(items)) price         else NA),
-      price_was   = as.double(  if ("originalPrice"  %in% names(items)) originalPrice else NA),
-      on_sale     = as.logical( if ("onSale"         %in% names(items)) onSale        else
-                                  !is.na(price_was) & price_was > price),
-      url         = as.character(if ("productUrl"    %in% names(items)) productUrl    else NA),
-      upc_raw     = as.character(if ("itemId"        %in% names(items)) itemId        else NA),
-      in_stock    = as.logical( if ("inStock"        %in% names(items)) inStock       else NA),
-      keyword     = term,
-      category    = NA_character_,
-      signal      = NA_real_
+      date      = Sys.Date(),
+      source    = "rapidapi",
+      title     = as.character(item_product_name),
+      price     = as.double(item_location_pricing_salePrice),
+      price_was = as.double(item_location_pricing_listPrice),
+      on_sale   = (!is.na(price) & !is.na(price_was) & price < price_was) |
+                    str_detect(coalesce(item_product_marketing_statement, ""),
+                               regex("\\boff\\b|save|savings|instant", ignore_case = TRUE)),
+      url       = paste0("https://www.costco.com/productid.", item_number, ".html"),
+      upc_raw   = as.character(item_number),
+      in_stock  = as.logical(isItemInStock),
+      keyword   = term,
+      category  = NA_character_,
+      signal    = NA_real_
     ) |>
-    mutate(
-      product_key = make_product_key(title, upc = upc_raw)
-    ) |>
+    mutate(product_key = make_product_key(title, upc = upc_raw)) |>
     select(-upc_raw)
 }
 
