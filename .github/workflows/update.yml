@@ -56,7 +56,11 @@ jobs:
           git pull --rebase origin main
           git add data/
           git diff --cached --quiet || git commit -m "data: weekly update [skip ci]"
-          git push
+          for i in 1 2 3; do
+            git push origin main && break
+            echo "Push attempt $i failed, rebasing and retrying..."
+            git pull --rebase origin main
+          done
 
       - name: Render site
         run: quarto render
