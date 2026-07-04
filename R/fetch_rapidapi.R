@@ -12,7 +12,7 @@ source("R/normalize.R")
 
 RAPIDAPI_HOST <- "real-time-costco-data.p.rapidapi.com"
 QUOTA_PATH    <- "data/quota_rapidapi.csv"
-QUOTA_CAP     <- 75L  # update after confirming BASIC plan limit in §4
+QUOTA_CAP     <- 100L  # update after confirming BASIC plan limit in §4
 
 # ---------- quota helpers ----------
 
