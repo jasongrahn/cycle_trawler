@@ -53,15 +53,15 @@ jobs:
         run: |
           git config user.name  "ww-bot"
           git config user.email "bot@users.noreply.github.com"
-          git stash --include-untracked
-          git pull --rebase origin main
-          git stash pop
           git add data/
-          git diff --cached --quiet || git commit -m "data: weekly update [skip ci]"
+          git diff --cached --quiet && exit 0
+          git commit -m "data: weekly update [skip ci]"
           for i in 1 2 3; do
             git push origin main && break
             echo "Push attempt $i failed, rebasing and retrying..."
+            git stash
             git pull --rebase origin main
+            git stash pop || true
           done
 
       - name: Render site
