@@ -52,6 +52,30 @@ make_dt <- function(df, filter = "top", ...) {
 Not affiliated with Costco. Hobby project. Data may be wrong. If a link doesn't work, search for the product directly at [costco.com](https://www.costco.com).
 :::
 
+## 🏆 Fuel Value Leaderboard
+
+*Lower $/100g carbs = more fuel for your dollar. Electrolyte products (Liquid IV, Zipfizz, coconut water) rank near the bottom — they're not primarily carb sources. Nutrition numbers are from package labels and are approximate; verify before race-day shopping.*
+
+```{r fuel-value}
+df <- read_site("fuel_value.csv")
+
+if (is.null(df)) {
+  empty_msg()
+} else {
+  df |>
+    mutate(
+      Item              = ifelse(!is.na(url), paste0('<a href="', url, '" target="_blank">', title, '</a>'), title),
+      Price             = price,
+      `$/100g Carbs`    = usd_per_100g_carbs,
+      `$/100g Protein`  = usd_per_100g_protein,
+      Category          = category
+    ) |>
+    select(Item, Price, `$/100g Carbs`, `$/100g Protein`, Category) |>
+    make_dt() |>
+    formatCurrency(c("Price", "$/100g Carbs", "$/100g Protein"), digits = 2)
+}
+```
+
 ## 🔥 On Sale Now
 
 ```{r on-sale}
@@ -144,30 +168,6 @@ if (is.null(df) || n_distinct(df$date) < 2) {
       strip.text      = element_text(face = "bold"),
       panel.grid.minor = element_blank()
     )
-}
-```
-
-## 🏆 Fuel Value Leaderboard
-
-*Lower $/100g carbs = more fuel for your dollar. Electrolyte products (Liquid IV, Zipfizz, coconut water) rank near the bottom — they're not primarily carb sources. Nutrition numbers are from package labels and are approximate; verify before race-day shopping.*
-
-```{r fuel-value}
-df <- read_site("fuel_value.csv")
-
-if (is.null(df)) {
-  empty_msg()
-} else {
-  df |>
-    mutate(
-      Item              = ifelse(!is.na(url), paste0('<a href="', url, '" target="_blank">', title, '</a>'), title),
-      Price             = price,
-      `$/100g Carbs`    = usd_per_100g_carbs,
-      `$/100g Protein`  = usd_per_100g_protein,
-      Category          = category
-    ) |>
-    select(Item, Price, `$/100g Carbs`, `$/100g Protein`, Category) |>
-    make_dt() |>
-    formatCurrency(c("Price", "$/100g Carbs", "$/100g Protein"), digits = 2)
 }
 ```
 
