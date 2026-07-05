@@ -57,12 +57,13 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m "data: weekly update [skip ci]"
           for i in 1 2 3; do
-            git push origin main && break
+            git push origin main && exit 0
             echo "Push attempt $i failed, rebasing and retrying..."
             git stash
             git pull --rebase origin main
             git stash pop || true
           done
+          echo "::error::data push failed after 3 attempts" && exit 1
 
       - name: Render site
         run: quarto render
